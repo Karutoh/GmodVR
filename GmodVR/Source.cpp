@@ -179,6 +179,50 @@ LUA_FUNCTION(WaitGetPoses)
 	return 1;
 }
 
+LUA_FUNCTION(GetDevicePose)
+{
+	LUA->CheckType(1, Type::NUMBER);
+
+	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
+
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	{
+		Vector row_1 = {};
+		row_1.x = 1.0f;
+		row_1.y = 0.0f;
+		row_1.z = 0.0f;
+
+		Vector row_2 = {};
+		row_2.x = 0.0f;
+		row_2.y = 1.0f;
+		row_2.z = 0.0f;
+
+		Vector row_3 = {};
+		row_3.x = 0.0f;
+		row_3.y = 0.0f;
+		row_3.z = 1.0f;
+
+		Vector row_4 = {};
+		row_4.x = 0.0f;
+		row_4.y = 0.0f;
+		row_4.z = 0.0f;
+
+		LUA->PushVector(row_1);
+		LUA->PushVector(row_2);
+		LUA->PushVector(row_3);
+		LUA->PushVector(row_4);
+
+		return 1;
+	}
+
+	LUA->PushVector(devPoses[dIndex][0]);
+	LUA->PushVector(devPoses[dIndex][1]);
+	LUA->PushVector(devPoses[dIndex][2]);
+	LUA->PushVector(devPoses[dIndex][3]);
+
+	return 1;
+}
+
 LUA_FUNCTION(GetDeviceClass)
 {
 	LUA->CheckType(1, Type::NUMBER);
@@ -231,6 +275,9 @@ GMOD_MODULE_OPEN()
 
 		LUA->PushCFunction(WaitGetPoses);
 		LUA->SetField(-2, "WaitGetPoses");
+
+		LUA->PushCFunction(GetDevicePose);
+		LUA->SetField(-2, "GetDevicePose");
 
 		LUA->PushCFunction(Submit);
 		LUA->SetField(-2, "Submit");
