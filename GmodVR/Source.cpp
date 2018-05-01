@@ -7,9 +7,10 @@ unsigned int patch = 0;
 
 using namespace GarrysMod::Lua;
 
-vr::TrackedDevicePose_t devices[vr::k_unMaxTrackedDeviceCount];
-Vector devPoses[vr::k_unMaxTrackedDeviceCount][4];
-vr::IVRSystem *system;
+vr::TrackedDevicePose_t devices[vr::k_unMaxTrackedDeviceCount]{};
+Vector devPoses[vr::k_unMaxTrackedDeviceCount][4]{ {} };
+unsigned int trackedDevices = 0;
+vr::IVRSystem *system = 0;
 
 int ResolveDeviceType(int deviceId) {
 
@@ -69,6 +70,18 @@ LUA_FUNCTION(MaxTrackedDevices)
 	return 1;
 }
 
+LUA_FUNCTION(TrackedDevices)
+{
+	LUA->PushNumber(trackedDevices);
+	return 1;
+}
+
+LUA_FUNCTION(IsDeviceValid)
+{
+	LUA->PushBool(devices[static_cast<unsigned int>(LUA->GetNumber())].bPoseIsValid);
+	return 1;
+}
+
 LUA_FUNCTION(Submit)
 {
 	if (!system)
@@ -113,10 +126,14 @@ LUA_FUNCTION(WaitGetPoses)
 		return -1;
 	}
 
+	trackedDevices = 0;
+
 	for (unsigned int i = 0; i < vr::k_unMaxTrackedDeviceCount; ++i)
 	{
 		if (!devices[i].bPoseIsValid)
 			continue;
+
+		++trackedDevices;
 
 		vr::HmdMatrix34_t tmp = devices[i].mDeviceToAbsoluteTracking;
 
@@ -176,6 +193,12 @@ GMOD_MODULE_OPEN()
 
 	LUA->PushCFunction(MaxTrackedDevices);
 	LUA->SetField(-2, "MaxTrackedDevices");
+
+	LUA->PushCFunction(TrackedDevices);
+	LUA->SetField(-2, "TrackedDevices");
+
+	LUA->PushCFunction(IsDeviceValid);
+	LUA->SetField(-2, "IsDeviceValid");
 
 	LUA->PushCFunction(GetDeviceClass);
 	LUA->SetField(-2, "GetDeviceClass");
