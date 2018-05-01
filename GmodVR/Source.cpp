@@ -35,9 +35,9 @@ int ResolveDeviceRole(int deviceId) {
 LUA_FUNCTION(GetVersion)
 {
 	Vector ver = {};
-	ver.x = major;
-	ver.y = minor;
-	ver.z = patch;
+	ver.x = static_cast<float>(major);
+	ver.y = static_cast<float>(minor);
+	ver.z = static_cast<float>(patch);
 
 	LUA->PushVector(ver);
 	return 1;
@@ -94,10 +94,10 @@ LUA_FUNCTION(Submit)
 
 	vr::Texture_t tex = {};
 	tex.eColorSpace = vr::EColorSpace::ColorSpace_Auto;
-	tex.eType = (vr::ETextureType)LUA->GetNumber(1);
+	tex.eType = (vr::ETextureType)static_cast<unsigned int>(LUA->GetNumber(1));
 	tex.handle = (void *)(uintptr_t)LUA->GetNumber(2);
 
-	vr::EVRCompositorError err = com->Submit((vr::EVREye)LUA->GetNumber(3), &tex);
+	vr::EVRCompositorError err = com->Submit((vr::EVREye)static_cast<unsigned int>(LUA->GetNumber(3)), &tex);
 	if (err != vr::EVRCompositorError::VRCompositorError_None)
 	{
 		LUA->PushNumber(err);
