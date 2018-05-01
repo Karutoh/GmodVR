@@ -231,6 +231,8 @@ GMOD_MODULE_OPEN()
 		LUA->SetField(-2, "InitVR");
 	}
 
+	LUA->SetTable(-3);
+
 	return 0;
 }
 
