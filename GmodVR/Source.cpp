@@ -51,9 +51,15 @@ LUA_FUNCTION(IsHmdPresent)
 
 LUA_FUNCTION(InitVR)
 {
-	vr::EVRInitError eError = vr::VRInitError_None;
+	if (system)
+	{
+		LUA->PushBool(false);
+		return -1;
+	}
 
-	system = vr::VR_Init(&eError, vr::VRApplication_Scene);
+	vr::EVRInitError eError;
+
+	system = vr::VR_Init(&eError, vr::EVRApplicationType::VRApplication_Scene);
 
 	if (eError != vr::VRInitError_None)
 	{
@@ -221,8 +227,8 @@ GMOD_MODULE_OPEN()
 		LUA->PushCFunction(Submit);
 		LUA->SetField(-2, "Submit");
 
-		/*LUA->PushCFunction(InitVR);
-		LUA->SetField(-2, "InitVR");*/
+		LUA->PushCFunction(InitVR);
+		LUA->SetField(-2, "InitVR");
 	}
 
 	return 0;
