@@ -239,6 +239,7 @@ GMOD_MODULE_OPEN()
 		LUA->SetField(-2, "Init");
 	}
 
+	LUA->SetTable(-3);
 	LUA->Pop();
 
 	return 0;
