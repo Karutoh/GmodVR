@@ -11,6 +11,28 @@ vr::TrackedDevicePose_t devices[vr::k_unMaxTrackedDeviceCount];
 Vector devPoses[vr::k_unMaxTrackedDeviceCount][4];
 vr::IVRSystem *system;
 
+int ResolveDeviceType(int deviceId) {
+
+	if (!system) {
+		return -1;
+	}
+
+	vr::ETrackedDeviceClass deviceClass = vr::VRSystem()->GetTrackedDeviceClass(deviceId);
+
+	return static_cast<int>(deviceClass);
+}
+
+int ResolveDeviceRole(int deviceId) {
+
+	if (!system) {
+		return -1;
+	}
+
+	int deviceRole = vr::VRSystem()->GetInt32TrackedDeviceProperty(deviceId, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
+
+	return static_cast<int>(deviceRole);
+}
+
 LUA_FUNCTION(GetVersion)
 {
 	Vector ver = {};
@@ -73,28 +95,6 @@ LUA_FUNCTION(Submit)
 
 	LUA->PushNumber(err);
 	return 1;
-}
-
-int ResolveDeviceType(int deviceId) {
-
-	if (!system) {
-		return -1;
-	}
-
-	vr::ETrackedDeviceClass deviceClass = vr::VRSystem()->GetTrackedDeviceClass(deviceId);
-
-	return static_cast<int>(deviceClass);
-}
-
-int ResolveDeviceRole(int deviceId) {
-
-	if (!system) {
-		return -1;
-	}
-
-	int deviceRole = vr::VRSystem()->GetInt32TrackedDeviceProperty(deviceId, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
-
-	return static_cast<int>(deviceRole);
 }
 
 
@@ -185,6 +185,9 @@ GMOD_MODULE_OPEN()
 	LUA->PushCFunction(GetDeviceRole);
 	LUA->SetField(-2, "GetDeviceRole");
 
+	LUA->PushCFunction(WaitGetPoses);
+	LUA->SetField(-2, "WaitGetPoses");
+
 	LUA->PushCFunction(Submit);
 	LUA->SetField(-2, "Submit");
 
@@ -196,14 +199,11 @@ GMOD_MODULE_OPEN()
 
 GMOD_MODULE_CLOSE()
 {
-	return 0;
-}
+	if (!system)
+		return 0;
 
-void Shutdown()
-{
-	if (system != NULL)
-	{
-		vr::VR_Shutdown();
-		system = NULL;
-	}
+	vr::VR_Shutdown();
+	system = 0;
+
+	return 0;
 }
