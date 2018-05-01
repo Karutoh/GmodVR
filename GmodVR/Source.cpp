@@ -49,25 +49,25 @@ LUA_FUNCTION(IsHmdPresent)
 	return 1;
 }
 
-LUA_FUNCTION(InitVR)
+LUA_FUNCTION(Init)
 {
+	vr::EVRInitError eError = vr::EVRInitError::VRInitError_None;
+
 	if (system)
 	{
-		LUA->PushBool(false);
-		return -1;
+		LUA->PushNumber(eError);
+		return 1;
 	}
-
-	vr::EVRInitError eError;
 
 	system = vr::VR_Init(&eError, vr::EVRApplicationType::VRApplication_Scene);
 
-	if (eError != vr::VRInitError_None)
+	if (eError != vr::EVRInitError::VRInitError_None)
 	{
-		LUA->PushBool(false);
-		return -1;
+		LUA->PushNumber(eError);
+		return 1;
 	}
 
-	LUA->PushBool(true);
+	LUA->PushNumber(eError);
 	return 1;
 }
 
@@ -97,24 +97,32 @@ LUA_FUNCTION(Submit)
 	LUA->CheckType(2, Type::NUMBER);
 	LUA->CheckType(3, Type::NUMBER);
 
+	vr::EVRCompositorError err = vr::EVRCompositorError::VRCompositorError_None;
+
 	if (!system)
-		return -1;
+	{
+		LUA->PushNumber(err);
+		return 1;
+	}
 
 	vr::IVRCompositor *com = vr::VRCompositor();
 
 	if (!com)
-		return -1;
+	{
+		LUA->PushNumber(err);
+		return 1;
+	}
 
 	vr::Texture_t tex = {};
 	tex.eColorSpace = vr::EColorSpace::ColorSpace_Auto;
 	tex.eType = (vr::ETextureType)static_cast<unsigned int>(LUA->GetNumber(1));
 	tex.handle = (void *)(uintptr_t)LUA->GetNumber(2);
 
-	vr::EVRCompositorError err = com->Submit((vr::EVREye)static_cast<unsigned int>(LUA->GetNumber(3)), &tex);
+	err = com->Submit((vr::EVREye)static_cast<unsigned int>(LUA->GetNumber(3)), &tex);
 	if (err != vr::EVRCompositorError::VRCompositorError_None)
 	{
 		LUA->PushNumber(err);
-		return -1;
+		return 1;
 	}
 
 	LUA->PushNumber(err);
@@ -129,14 +137,14 @@ LUA_FUNCTION(WaitGetPoses)
 	if (!system)
 	{
 		LUA->PushNumber(err);
-		return -1;
+		return 1;
 	}
 
 	err = vr::VRCompositor()->WaitGetPoses(devices, vr::k_unMaxTrackedDeviceCount, 0, 0);
 	if (err)
 	{
 		LUA->PushNumber(err);
-		return -1;
+		return 1;
 	}
 
 	trackedDevices = 0;
@@ -227,11 +235,11 @@ GMOD_MODULE_OPEN()
 		LUA->PushCFunction(Submit);
 		LUA->SetField(-2, "Submit");
 
-		LUA->PushCFunction(InitVR);
-		LUA->SetField(-2, "InitVR");
+		LUA->PushCFunction(Init);
+		LUA->SetField(-2, "Init");
 	}
 
-	LUA->SetTable(-3);
+	LUA->Pop();
 
 	return 0;
 }
