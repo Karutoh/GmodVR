@@ -1,9 +1,9 @@
 #include "GarrysMod/Lua/Interface.h"
 #include "openvr/openvr.h"
 
-unsigned int major = 1;
-unsigned int minor = 0;
-unsigned int patch = 0;
+const unsigned int major = 1;
+const unsigned int minor = 0;
+const unsigned int patch = 0;
 
 using namespace GarrysMod::Lua;
 
@@ -58,8 +58,9 @@ LUA_FUNCTION(InitVR)
 	if (eError != vr::VRInitError_None)
 	{
 		LUA->PushBool(false);
-		return 1;
+		return -1;
 	}
+
 	LUA->PushBool(true);
 	return 1;
 }
@@ -188,40 +189,42 @@ LUA_FUNCTION(GetDeviceRole)
 GMOD_MODULE_OPEN()
 {
 	LUA->PushSpecial(SPECIAL_GLOB);
+
+	LUA->PushString("GmodVR");
+
 	LUA->CreateTable();
+	{
+		LUA->PushCFunction(GetVersion);
+		LUA->SetField(-2, "GetVersion");
 
-	LUA->PushString("GetVersion");
-	LUA->PushCFunction(GetVersion);
+		LUA->PushCFunction(IsHmdPresent);
+		LUA->SetField(-2, "IsHmdPresent");
 
-	LUA->PushString("IsHmdPresent");
-	LUA->PushCFunction(IsHmdPresent);
+		LUA->PushCFunction(MaxTrackedDevices);
+		LUA->SetField(-2, "MaxTrackedDevices");
 
-	/*LUA->PushCFunction(InitVR);
-	LUA->SetField(-2, "InitVR");
+		LUA->PushCFunction(TrackedDevices);
+		LUA->SetField(-2, "TrackedDevices");
 
-	LUA->PushCFunction(MaxTrackedDevices);
-	LUA->SetField(-2, "MaxTrackedDevices");
+		LUA->PushCFunction(IsDeviceValid);
+		LUA->SetField(-2, "IsDeviceValid");
 
-	LUA->PushCFunction(TrackedDevices);
-	LUA->SetField(-2, "TrackedDevices");
+		LUA->PushCFunction(GetDeviceClass);
+		LUA->SetField(-2, "GetDeviceClass");
 
-	LUA->PushCFunction(IsDeviceValid);
-	LUA->SetField(-2, "IsDeviceValid");
+		LUA->PushCFunction(GetDeviceRole);
+		LUA->SetField(-2, "GetDeviceRole");
 
-	LUA->PushCFunction(GetDeviceClass);
-	LUA->SetField(-2, "GetDeviceClass");
+		LUA->PushCFunction(WaitGetPoses);
+		LUA->SetField(-2, "WaitGetPoses");
 
-	LUA->PushCFunction(GetDeviceRole);
-	LUA->SetField(-2, "GetDeviceRole");
+		LUA->PushCFunction(Submit);
+		LUA->SetField(-2, "Submit");
 
-	LUA->PushCFunction(WaitGetPoses);
-	LUA->SetField(-2, "WaitGetPoses");
+		/*LUA->PushCFunction(InitVR);
+		LUA->SetField(-2, "InitVR");*/
+	}
 
-	LUA->PushCFunction(Submit);
-	LUA->SetField(-2, "Submit");*/
-
-	LUA->SetField(-2, "GmodVR");
-	LUA->SetTable(-3);
 	return 0;
 }
 
