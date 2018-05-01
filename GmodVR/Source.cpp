@@ -4,12 +4,11 @@
 #include "GarrysMod/Lua/Interface.h"
 #include "openvr/openvr.h"
 
-int version = 1; //every release this will be incremented, in lua, the user will be warned to update the dll if they have a lua version ahead of the module.
+int version = 1;
 
 using namespace GarrysMod::Lua;
 
 vr::IVRSystem *system;
-
 
 LUA_FUNCTION(GetVersion)
 {
@@ -26,10 +25,11 @@ LUA_FUNCTION(IsHmdPresent)
 LUA_FUNCTION(InitVR)
 {
 	vr::EVRInitError eError = vr::VRInitError_None;
-	system = vr::VR_Init(&eError, vr::VRApplication_Background);
+
+	system = vr::VR_Init(&eError, vr::VRApplication_Scene);
+
 	if (eError != vr::VRInitError_None)
 	{
-
 		LUA->PushBool(false);
 		return 1;
 	}
@@ -40,6 +40,26 @@ LUA_FUNCTION(InitVR)
 LUA_FUNCTION(CountDevices)
 {
 	LUA->PushNumber(vr::k_unMaxTrackedDeviceCount);
+	return 1;
+}
+
+LUA_FUNCTION(Submit)
+{
+	if (!system)
+		return -1;
+
+	vr::IVRCompositor *com = vr::VRCompositor();
+
+	if (!com)
+		return -1;
+
+	vr::Texture_t tex = {};
+	tex.eColorSpace = vr::EColorSpace::ColorSpace_Auto;
+	tex.eType = (vr::ETextureType)LUA->GetNumber(1);
+	tex.handle = (void *)(uintptr_t)LUA->GetNumber(2);
+
+	com->Submit((vr::EVREye)LUA->GetNumber(3), &tex);
+
 	return 1;
 }
 
@@ -103,6 +123,7 @@ GMOD_MODULE_OPEN()
 	LUA->PushCFunction(CountDevices); LUA->SetField(-2, "CountDevices");
 	LUA->PushCFunction(GetDeviceClass); LUA->SetField(-2, "GetDeviceClass");
 	LUA->PushCFunction(GetDeviceRole); LUA->SetField(-2, "GetDeviceRole");
+	LUA->PushCFunction(Submit); LUA->SetField(-2, "Submit");
 	LUA->SetField(-2, "gvr");
 	LUA->Pop();
 	return 0;
