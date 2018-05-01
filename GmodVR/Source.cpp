@@ -78,12 +78,18 @@ LUA_FUNCTION(TrackedDevices)
 
 LUA_FUNCTION(IsDeviceValid)
 {
-	LUA->PushBool(devices[static_cast<unsigned int>(LUA->GetNumber())].bPoseIsValid);
+	LUA->CheckType(1, Type::NUMBER);
+
+	LUA->PushBool(devices[static_cast<unsigned int>(LUA->GetNumber(1))].bPoseIsValid);
 	return 1;
 }
 
 LUA_FUNCTION(Submit)
 {
+	LUA->CheckType(1, Type::NUMBER);
+	LUA->CheckType(2, Type::NUMBER);
+	LUA->CheckType(3, Type::NUMBER);
+
 	if (!system)
 		return -1;
 
@@ -160,7 +166,8 @@ LUA_FUNCTION(WaitGetPoses)
 
 LUA_FUNCTION(GetDeviceClass)
 {
-	(LUA->CheckType(1, Type::NUMBER));
+	LUA->CheckType(1, Type::NUMBER);
+
 	int deviceId = static_cast<int>(LUA->GetNumber(1));
 	int type = ResolveDeviceType(deviceId);
 	LUA->PushNumber(type);
@@ -169,7 +176,8 @@ LUA_FUNCTION(GetDeviceClass)
 
 LUA_FUNCTION(GetDeviceRole)
 {
-	(LUA->CheckType(1, Type::NUMBER));
+	LUA->CheckType(1, Type::NUMBER);
+
 	int deviceId = static_cast<int>(LUA->GetNumber(1));
 	int type = ResolveDeviceRole(deviceId);
 	LUA->PushNumber(type);
@@ -179,16 +187,16 @@ LUA_FUNCTION(GetDeviceRole)
 
 GMOD_MODULE_OPEN()
 {
-	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushSpecial(SPECIAL_GLOB);
 	LUA->CreateTable();
 
+	LUA->PushString("GetVersion");
 	LUA->PushCFunction(GetVersion);
-	LUA->SetField(-2, "GetVersion");
 
+	LUA->PushString("IsHmdPresent");
 	LUA->PushCFunction(IsHmdPresent);
-	LUA->SetField(-2, "IsHmdPresent");
 
-	LUA->PushCFunction(InitVR);
+	/*LUA->PushCFunction(InitVR);
 	LUA->SetField(-2, "InitVR");
 
 	LUA->PushCFunction(MaxTrackedDevices);
@@ -210,10 +218,10 @@ GMOD_MODULE_OPEN()
 	LUA->SetField(-2, "WaitGetPoses");
 
 	LUA->PushCFunction(Submit);
-	LUA->SetField(-2, "Submit");
+	LUA->SetField(-2, "Submit");*/
 
 	LUA->SetField(-2, "GmodVR");
-	LUA->Pop();
+	LUA->SetTable(-3);
 	return 0;
 }
 
