@@ -13,22 +13,20 @@ vr::IVRSystem *system;
 
 int ResolveDeviceType(int deviceId) {
 
-	if (!system) {
+	if (!system)
 		return -1;
-	}
 
-	vr::ETrackedDeviceClass deviceClass = vr::VRSystem()->GetTrackedDeviceClass(deviceId);
+	vr::ETrackedDeviceClass deviceClass = system->GetTrackedDeviceClass(deviceId);
 
 	return static_cast<int>(deviceClass);
 }
 
 int ResolveDeviceRole(int deviceId) {
 
-	if (!system) {
+	if (!system)
 		return -1;
-	}
-
-	int deviceRole = vr::VRSystem()->GetInt32TrackedDeviceProperty(deviceId, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
+	
+	int deviceRole = system->GetInt32TrackedDeviceProperty(deviceId, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
 
 	return static_cast<int>(deviceRole);
 }
@@ -65,7 +63,7 @@ LUA_FUNCTION(InitVR)
 	return 1;
 }
 
-LUA_FUNCTION(CountDevices)
+LUA_FUNCTION(MaxTrackedDevices)
 {
 	LUA->PushNumber(vr::k_unMaxTrackedDeviceCount);
 	return 1;
@@ -176,8 +174,8 @@ GMOD_MODULE_OPEN()
 	LUA->PushCFunction(InitVR);
 	LUA->SetField(-2, "InitVR");
 
-	LUA->PushCFunction(CountDevices);
-	LUA->SetField(-2, "CountDevices");
+	LUA->PushCFunction(MaxTrackedDevices);
+	LUA->SetField(-2, "MaxTrackedDevices");
 
 	LUA->PushCFunction(GetDeviceClass);
 	LUA->SetField(-2, "GetDeviceClass");
