@@ -89,7 +89,7 @@ LUA_FUNCTION(IsDeviceValid)
 
 	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
 
-	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount)
 	{
 		LUA->PushBool(false);
 		return 1;
@@ -193,7 +193,7 @@ LUA_FUNCTION(GetDevicePose)
 
 	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
 
-	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount)
 	{
 		Vector row_1 = {};
 		row_1.x = 1.0f;
@@ -237,7 +237,7 @@ LUA_FUNCTION(GetDeviceClass)
 
 	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
 
-	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount)
 	{
 		LUA->PushNumber(vr::ETrackedDeviceClass::TrackedDeviceClass_Invalid);
 		return 1;
@@ -253,7 +253,7 @@ LUA_FUNCTION(GetDeviceRole)
 
 	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
 
-	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount)
 	{
 		LUA->PushNumber(vr::ETrackedControllerRole::TrackedControllerRole_Invalid);
 		return 1;
