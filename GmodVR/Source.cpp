@@ -291,7 +291,7 @@ GMOD_MODULE_CLOSE()
 		return 0;
 
 	vr::VR_Shutdown();
-	system = 0;
+	system = nullptr;
 
 	return 0;
 }
