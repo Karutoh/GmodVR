@@ -13,34 +13,25 @@ Vector devPoses[vr::k_unMaxTrackedDeviceCount][4]{ {} };
 unsigned int trackedDevices = 0;
 vr::IVRSystem *system = nullptr;
 
-int ResolveDeviceType(int deviceId) {
-
+vr::ETrackedDeviceClass RetreiveDeviceClass(int deviceId)
+{
 	if (!system)
-		return -1;
+		return vr::ETrackedDeviceClass::TrackedDeviceClass_Invalid;
 
-	vr::ETrackedDeviceClass deviceClass = system->GetTrackedDeviceClass(deviceId);
-
-	return static_cast<int>(deviceClass);
+	return system->GetTrackedDeviceClass(deviceId);
 }
 
-int ResolveDeviceRole(int deviceId) {
-
+vr::ETrackedControllerRole RetreiveDeviceRole(int deviceId)
+{
 	if (!system)
-		return -1;
-	
-	int deviceRole = system->GetInt32TrackedDeviceProperty(deviceId, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
+		return vr::ETrackedControllerRole::TrackedControllerRole_Invalid;
 
-	return static_cast<int>(deviceRole);
+	return (vr::ETrackedControllerRole)system->GetInt32TrackedDeviceProperty(deviceId, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
 }
 
 LUA_FUNCTION(GetVersion)
 {
-	Vector ver = {};
-	ver.x = static_cast<float>(major);
-	ver.y = static_cast<float>(minor);
-	ver.z = static_cast<float>(patch);
-
-	LUA->PushVector(ver);
+	LUA->PushVector({ static_cast<float>(major), static_cast<float>(minor), static_cast<float>(patch) });
 	return 1;
 }
 
@@ -96,7 +87,7 @@ LUA_FUNCTION(IsDeviceValid)
 		return 1;
 	}
 
-	LUA->PushBool(devices[static_cast<unsigned int>(LUA->GetNumber(1))].bPoseIsValid);
+	LUA->PushBool(devices[dIndex].bPoseIsValid);
 	return 1;
 }
 
@@ -224,7 +215,7 @@ LUA_FUNCTION(GetDeviceClass)
 		return 1;
 	}
 
-	LUA->PushNumber(ResolveDeviceType(dIndex));
+	LUA->PushNumber(RetreiveDeviceClass(dIndex));
 	return 1;
 }
 
@@ -240,7 +231,7 @@ LUA_FUNCTION(GetDeviceRole)
 		return 1;
 	}
 
-	LUA->PushNumber(ResolveDeviceRole(dIndex));
+	LUA->PushNumber(RetreiveDeviceRole(dIndex));
 	return 1;
 }
 
