@@ -1,4 +1,5 @@
 #include "GarrysMod/Lua/Interface.h"
+#include "GarrysMod/Lua/SourceCompat.h"
 #include "openvr/openvr.h"
 
 const unsigned int major = 1;
@@ -195,30 +196,10 @@ LUA_FUNCTION(GetDevicePose)
 
 	if (dIndex >= vr::k_unMaxTrackedDeviceCount)
 	{
-		Vector row_1 = {};
-		row_1.x = 1.0f;
-		row_1.y = 0.0f;
-		row_1.z = 0.0f;
-
-		Vector row_2 = {};
-		row_2.x = 0.0f;
-		row_2.y = 1.0f;
-		row_2.z = 0.0f;
-
-		Vector row_3 = {};
-		row_3.x = 0.0f;
-		row_3.y = 0.0f;
-		row_3.z = 1.0f;
-
-		Vector row_4 = {};
-		row_4.x = 0.0f;
-		row_4.y = 0.0f;
-		row_4.z = 0.0f;
-
-		LUA->PushVector(row_1);
-		LUA->PushVector(row_2);
-		LUA->PushVector(row_3);
-		LUA->PushVector(row_4);
+		LUA->PushVector({ 1.0f, 0.0f, 0.0f });
+		LUA->PushVector({ 0.0f, 1.0f, 0.0f });
+		LUA->PushVector({ 0.0f, 0.0f, 1.0f });
+		LUA->PushVector({ 0.0f, 0.0f, 0.0f });
 
 		return 4;
 	}

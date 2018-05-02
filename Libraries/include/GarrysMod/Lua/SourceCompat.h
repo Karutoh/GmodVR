@@ -6,23 +6,11 @@
 #else
     struct Vector
     {
-        Vector()
-            : x( 0.f )
-            , y( 0.f )
-            , z( 0.f )
-        {}
-
         float x, y, z;
     };
 
     struct QAngle
     {
-        QAngle()
-            : x( 0.f )
-            , y( 0.f )
-            , z( 0.f )
-        {}
-
         float x, y, z;
     };
 #endif
