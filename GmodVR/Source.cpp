@@ -10,7 +10,7 @@ using namespace GarrysMod::Lua;
 vr::TrackedDevicePose_t devices[vr::k_unMaxTrackedDeviceCount]{};
 Vector devPoses[vr::k_unMaxTrackedDeviceCount][4]{ {} };
 unsigned int trackedDevices = 0;
-vr::IVRSystem *system = 0;
+vr::IVRSystem *system = nullptr;
 
 int ResolveDeviceType(int deviceId) {
 
@@ -86,6 +86,14 @@ LUA_FUNCTION(TrackedDevices)
 LUA_FUNCTION(IsDeviceValid)
 {
 	LUA->CheckType(1, Type::NUMBER);
+
+	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
+
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	{
+		LUA->PushBool(false);
+		return 1;
+	}
 
 	LUA->PushBool(devices[static_cast<unsigned int>(LUA->GetNumber(1))].bPoseIsValid);
 	return 1;
@@ -212,7 +220,7 @@ LUA_FUNCTION(GetDevicePose)
 		LUA->PushVector(row_3);
 		LUA->PushVector(row_4);
 
-		return 1;
+		return 4;
 	}
 
 	LUA->PushVector(devPoses[dIndex][0]);
@@ -220,16 +228,22 @@ LUA_FUNCTION(GetDevicePose)
 	LUA->PushVector(devPoses[dIndex][2]);
 	LUA->PushVector(devPoses[dIndex][3]);
 
-	return 1;
+	return 4;
 }
 
 LUA_FUNCTION(GetDeviceClass)
 {
 	LUA->CheckType(1, Type::NUMBER);
 
-	int deviceId = static_cast<int>(LUA->GetNumber(1));
-	int type = ResolveDeviceType(deviceId);
-	LUA->PushNumber(type);
+	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
+
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	{
+		LUA->PushNumber(vr::ETrackedDeviceClass::TrackedDeviceClass_Invalid);
+		return 1;
+	}
+
+	LUA->PushNumber(ResolveDeviceType(dIndex));
 	return 1;
 }
 
@@ -237,9 +251,15 @@ LUA_FUNCTION(GetDeviceRole)
 {
 	LUA->CheckType(1, Type::NUMBER);
 
-	int deviceId = static_cast<int>(LUA->GetNumber(1));
-	int type = ResolveDeviceRole(deviceId);
-	LUA->PushNumber(type);
+	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
+
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount || dIndex < 0)
+	{
+		LUA->PushNumber(vr::ETrackedControllerRole::TrackedControllerRole_Invalid);
+		return 1;
+	}
+
+	LUA->PushNumber(ResolveDeviceRole(dIndex));
 	return 1;
 }
 
