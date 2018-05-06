@@ -9,7 +9,8 @@ const unsigned int patch = 0;
 using namespace GarrysMod::Lua;
 
 vr::TrackedDevicePose_t devices[vr::k_unMaxTrackedDeviceCount]{};
-Vector devPoses[vr::k_unMaxTrackedDeviceCount][4]{ {} };
+Vector devPoses[vr::k_unMaxTrackedDeviceCount][4]{{}};
+Vector devVel[vr::k_unMaxTrackedDeviceCount][2]{{}};
 unsigned int trackedDevices = 0;
 vr::IVRSystem *system = nullptr;
 
@@ -158,21 +159,18 @@ LUA_FUNCTION(WaitGetPoses)
 
 		vr::HmdMatrix34_t tmp = devices[i].mDeviceToAbsoluteTracking;
 
-		devPoses[i][0].x = tmp.m[0][0];
-		devPoses[i][0].y = tmp.m[1][0];
-		devPoses[i][0].z = tmp.m[2][0];
+		devPoses[i][0] = { tmp.m[0][0], tmp.m[1][0], tmp.m[2][0] };
+		devPoses[i][1] = { tmp.m[0][1], tmp.m[1][1], tmp.m[2][1] };
+		devPoses[i][2] = { tmp.m[0][2], tmp.m[1][2], tmp.m[2][2] };
+		devPoses[i][3] = { tmp.m[0][3], tmp.m[1][3], tmp.m[2][3] };
 
-		devPoses[i][1].x = tmp.m[0][1];
-		devPoses[i][1].y = tmp.m[1][1];
-		devPoses[i][1].z = tmp.m[2][1];
+		vr::HmdVector3_t angVel = devices[i].vAngularVelocity;
 
-		devPoses[i][2].x = tmp.m[0][2];
-		devPoses[i][2].y = tmp.m[1][2];
-		devPoses[i][2].z = tmp.m[2][2];
+		devVel[i][0] = {angVel.v[0], angVel.v[1], angVel.v[2]};
 
-		devPoses[i][3].x = tmp.m[0][3];
-		devPoses[i][3].y = tmp.m[1][3];
-		devPoses[i][3].z = tmp.m[2][3];
+		vr::HmdVector3_t vel = devices[i].vVelocity;
+
+		devVel[i][1] = { vel.v[0], vel.v[1], vel.v[2] };
 	}
 
 	LUA->PushNumber(err);
@@ -201,6 +199,26 @@ LUA_FUNCTION(GetDevicePose)
 	LUA->PushVector(devPoses[dIndex][3]);
 
 	return 4;
+}
+
+LUA_FUNCTION(GetDeviceVel)
+{
+	LUA->CheckType(1, Type::NUMBER);
+
+	unsigned int dIndex = static_cast<unsigned int>(LUA->GetNumber(1));
+
+	if (dIndex >= vr::k_unMaxTrackedDeviceCount)
+	{
+		LUA->PushVector({ 0.0f, 0.0f, 0.0f });
+		LUA->PushVector({ 0.0f, 0.0f, 0.0f });
+
+		return 2;
+	}
+
+	LUA->PushVector(devVel[dIndex][0]);
+	LUA->PushVector(devVel[dIndex][1]);
+
+	return 2;
 }
 
 LUA_FUNCTION(GetDeviceClass)
@@ -270,6 +288,9 @@ GMOD_MODULE_OPEN()
 
 		LUA->PushCFunction(GetDevicePose);
 		LUA->SetField(-2, "GetDevicePose");
+
+		LUA->PushCFunction(GetDeviceVel);
+		LUA->SetField(-2, "GetDeviceVel");
 
 		LUA->PushCFunction(Submit);
 		LUA->SetField(-2, "Submit");
