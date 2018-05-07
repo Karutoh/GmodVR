@@ -23,8 +23,8 @@ struct Button
 
 struct DeviceData
 {
-	Button buttons[vr::EVRButtonId::k_EButton_Max] = {};
-	Vector matrix[4] = {};
+	Button buttons[vr::EVRButtonId::k_EButton_Max];
+	Vector matrix[4];
 	bool connected;
 	Vector angVel;
 	Vector vel;
