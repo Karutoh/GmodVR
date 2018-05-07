@@ -8,10 +8,30 @@ const unsigned int patch = 0;
 
 using namespace GarrysMod::Lua;
 
+enum ButtonState
+{
+	BS_RELEASED,
+	BS_PRESSED,
+	BS_ONCE
+};
+
+struct Button
+{
+	ButtonState state;
+	bool wasPressed;
+} ButtonDef = { BS_RELEASED, false };
+
+struct DeviceData
+{
+	Button buttons[vr::EVRButtonId::k_EButton_Max] = {};
+	Vector matrix[4] = {};
+	bool connected;
+	Vector angVel;
+	Vector vel;
+} DeviceDataDef = { { ButtonDef }, { { 0.0f, 0.0f, 0.0f } }, false, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } };
+
 vr::TrackedDevicePose_t devices[vr::k_unMaxTrackedDeviceCount]{};
-Vector devPoses[vr::k_unMaxTrackedDeviceCount][4]{{}};
-Vector devVel[vr::k_unMaxTrackedDeviceCount][2]{{}};
-unsigned int trackedDevices = 0;
+DeviceData devData[vr::k_unMaxTrackedDeviceCount]{ DeviceDataDef };
 vr::IVRSystem *system = nullptr;
 
 vr::ETrackedDeviceClass RetreiveDeviceClass(int deviceId)
@@ -60,6 +80,14 @@ LUA_FUNCTION(Init)
 		return 1;
 	}
 
+	for (unsigned int i = 0; i < vr::k_unMaxTrackedDeviceCount; ++i)
+	{
+		if (!system->IsTrackedDeviceConnected(i))
+			continue;
+
+		devData[i].connected = true;
+	}
+
 	LUA->PushNumber(eError);
 	return 1;
 }
@@ -72,7 +100,16 @@ LUA_FUNCTION(MaxTrackedDevices)
 
 LUA_FUNCTION(TrackedDevices)
 {
-	LUA->PushNumber(trackedDevices);
+	unsigned int count = 0;
+	for (unsigned int i = 0; i < vr::k_unMaxTrackedDeviceCount; ++i)
+	{
+		if (!devData[i].connected)
+			continue;
+
+		++count;
+	}
+
+	LUA->PushNumber(count);
 	return 1;
 }
 
@@ -90,6 +127,53 @@ LUA_FUNCTION(IsDeviceValid)
 
 	LUA->PushBool(devices[dIndex].bPoseIsValid);
 	return 1;
+}
+
+LUA_FUNCTION(Update)
+{
+	if (!system)
+		return;
+
+	vr::VREvent_t e;
+	while (system->PollNextEvent(&e, sizeof(e)))
+	{
+		if (e.eventType == vr::VREvent_TrackedDeviceActivated)
+			devData[e.trackedDeviceIndex].connected = true;
+
+		if (e.eventType == vr::VREvent_TrackedDeviceDeactivated)
+			devData[e.trackedDeviceIndex].connected = false;
+
+		if (e.eventType == vr::VREvent_ButtonPress)
+			devData[e.trackedDeviceIndex].buttons[e.data.controller.button].wasPressed = true;
+
+		if (e.eventType == vr::VREvent_ButtonUnpress)
+			devData[e.trackedDeviceIndex].buttons[e.data.controller.button].wasPressed = false;
+
+		if (e.eventType == vr::VREvent_ButtonTouch)
+			devData[e.trackedDeviceIndex].buttons[e.data.controller.button].wasPressed = true;
+
+		if (e.eventType == vr::VREvent_ButtonUntouch)
+			devData[e.trackedDeviceIndex].buttons[e.data.controller.button].wasPressed = false;
+	}
+
+	for (unsigned int d = 0; d < vr::k_unMaxTrackedDeviceCount; ++d)
+	{
+		if (!devData[d].connected)
+			continue;
+
+		for (unsigned int b = 0; b < vr::EVRButtonId::k_EButton_Max; ++b)
+		{
+			if (devData[d].buttons[b].wasPressed)
+			{
+				if (devData[d].buttons[b].state == BS_RELEASED)
+					devData[d].buttons[b].state = BS_ONCE;
+				else
+					devData[d].buttons[b].state = BS_PRESSED;
+			}
+			else
+				devData[d].buttons[b].state = BS_RELEASED;
+		}
+	}
 }
 
 LUA_FUNCTION(Submit)
@@ -148,29 +232,25 @@ LUA_FUNCTION(WaitGetPoses)
 		return 1;
 	}
 
-	trackedDevices = 0;
-
 	for (unsigned int i = 0; i < vr::k_unMaxTrackedDeviceCount; ++i)
 	{
 		if (!devices[i].bPoseIsValid)
 			continue;
 
-		++trackedDevices;
-
 		vr::HmdMatrix34_t tmp = devices[i].mDeviceToAbsoluteTracking;
 
-		devPoses[i][0] = { tmp.m[0][0], tmp.m[1][0], tmp.m[2][0] };
-		devPoses[i][1] = { tmp.m[0][1], tmp.m[1][1], tmp.m[2][1] };
-		devPoses[i][2] = { tmp.m[0][2], tmp.m[1][2], tmp.m[2][2] };
-		devPoses[i][3] = { tmp.m[0][3], tmp.m[1][3], tmp.m[2][3] };
+		devData[i].matrix[0] = { tmp.m[0][0], tmp.m[1][0], tmp.m[2][0] };
+		devData[i].matrix[1] = { tmp.m[0][1], tmp.m[1][1], tmp.m[2][1] };
+		devData[i].matrix[2] = { tmp.m[0][2], tmp.m[1][2], tmp.m[2][2] };
+		devData[i].matrix[3] = { tmp.m[0][3], tmp.m[1][3], tmp.m[2][3] };
 
 		vr::HmdVector3_t angVel = devices[i].vAngularVelocity;
 
-		devVel[i][0] = {angVel.v[0], angVel.v[1], angVel.v[2]};
+		devData[i].angVel = { angVel.v[0], angVel.v[1], angVel.v[2] };
 
 		vr::HmdVector3_t vel = devices[i].vVelocity;
 
-		devVel[i][1] = { vel.v[0], vel.v[1], vel.v[2] };
+		devData[i].vel = { vel.v[0], vel.v[1], vel.v[2] };
 	}
 
 	LUA->PushNumber(err);
@@ -193,10 +273,10 @@ LUA_FUNCTION(GetDevicePose)
 		return 4;
 	}
 
-	LUA->PushVector(devPoses[dIndex][0]);
-	LUA->PushVector(devPoses[dIndex][1]);
-	LUA->PushVector(devPoses[dIndex][2]);
-	LUA->PushVector(devPoses[dIndex][3]);
+	LUA->PushVector(devData[dIndex].matrix[0]);
+	LUA->PushVector(devData[dIndex].matrix[1]);
+	LUA->PushVector(devData[dIndex].matrix[2]);
+	LUA->PushVector(devData[dIndex].matrix[3]);
 
 	return 4;
 }
@@ -215,8 +295,8 @@ LUA_FUNCTION(GetDeviceVel)
 		return 2;
 	}
 
-	LUA->PushVector(devVel[dIndex][0]);
-	LUA->PushVector(devVel[dIndex][1]);
+	LUA->PushVector(devData[dIndex].angVel);
+	LUA->PushVector(devData[dIndex].vel);
 
 	return 2;
 }
@@ -291,6 +371,9 @@ GMOD_MODULE_OPEN()
 
 		LUA->PushCFunction(GetDeviceVel);
 		LUA->SetField(-2, "GetDeviceVel");
+
+		LUA->PushCFunction(Update);
+		LUA->SetField(-2, "Update");
 
 		LUA->PushCFunction(Submit);
 		LUA->SetField(-2, "Submit");
