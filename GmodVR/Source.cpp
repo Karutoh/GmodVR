@@ -132,7 +132,7 @@ LUA_FUNCTION(IsDeviceValid)
 LUA_FUNCTION(Update)
 {
 	if (!system)
-		return;
+		return 0;
 
 	vr::VREvent_t e;
 	while (system->PollNextEvent(&e, sizeof(e)))
@@ -174,6 +174,8 @@ LUA_FUNCTION(Update)
 				devData[d].buttons[b].state = BS_RELEASED;
 		}
 	}
+
+	return 0;
 }
 
 LUA_FUNCTION(Submit)
